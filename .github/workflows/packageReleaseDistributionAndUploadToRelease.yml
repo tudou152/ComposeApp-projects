@@ -98,7 +98,7 @@ jobs:
 
       # 12. 运行 Gradle 任务，生成 .exe 文件（启用详细日志）
       - name: Run Gradle packageReleaseExe
-        run: ./gradlew packageReleaseExe --debug -Pwix.verbose=true -Pwix.iceValidation="ICE27;ICE30"
+        run: ./gradlew packageReleaseExe --debug
         continue-on-error: true
 
       # 13. 捕获标准输出日志并输出到 GitHub Actions 日志
