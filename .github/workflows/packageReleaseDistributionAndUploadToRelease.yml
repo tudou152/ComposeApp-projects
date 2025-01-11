@@ -153,8 +153,8 @@ jobs:
         run: icacls gradlew /grant Everyone:F
 
       # 11. 运行 Gradle 任务，生成 .exe 文件
-      - name: Run Gradle packageReleaseDistributionForCurrentOS
-        run: ./gradlew packageReleaseDistributionForCurrentOS
+      - name: Run Gradle packageReleaseExe
+        run: ./gradlew packageReleaseExe
         continue-on-error: true  # 即使任务失败，继续执行后续步骤
 
       # 12. 捕获标准输出日志并输出到 GitHub Actions 日志
