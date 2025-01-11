@@ -160,7 +160,7 @@ jobs:
       # 7. 捕获标准输出日志并输出到 GitHub Actions 日志
       - name: Capture and output standard log
         run: |
-          $stdoutLog = Get-ChildItem -Path "D:\a\Multitimer-cmp\Multitimer-cmp\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-out.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          $stdoutLog = Get-ChildItem -Path "D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-out.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
           if ($stdoutLog) {
               Write-Output "Standard output log content:"
               Get-Content -Path $stdoutLog.FullName
@@ -171,7 +171,7 @@ jobs:
       # 8. 捕获错误日志并输出到 GitHub Actions 日志
       - name: Capture and output error log
         run: |
-          $stderrLog = Get-ChildItem -Path "D:\a\Multitimer-cmp\Multitimer-cmp\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-err.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          $stderrLog = Get-ChildItem -Path "D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-err.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
           if ($stderrLog) {
               Write-Output "Error log content:"
               Get-Content -Path $stderrLog.FullName
@@ -185,8 +185,8 @@ jobs:
         with:
           name: build-logs
           path: |
-            D:\a\Multitimer-cmp\Multitimer-cmp\composeApp\build\compose\logs\packageReleaseExe\*-out.txt
-            D:\a\Multitimer-cmp\Multitimer-cmp\composeApp\build\compose\logs\packageReleaseExe\*-err.txt
+            D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe\*-out.txt
+            D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe\*-err.txt
 
       # 10. 如果任务失败，主动退出并标记为失败
       - name: Fail the job if Gradle task failed
