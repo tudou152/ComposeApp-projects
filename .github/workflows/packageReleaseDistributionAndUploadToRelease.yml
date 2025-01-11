@@ -1,115 +1,43 @@
 name: 多平台打包并上传到Release中
 
 on:
-  workflow_dispatch: # 手动触发 (变量引用的时候使用 ${{ github.event.inputs.tag_name }})
+  workflow_dispatch:
     inputs:
       tag_name:
         description: 'Tag name for the release'
         required: true
         default: 'v1.0.0'
-      skip_mac_build:
-        description: 'Skip macOS build?'
-        required: false
-        default: 'false'
 
 jobs:
-  # Job 1: 在 macOS 上构建 .dmg 文件
-  build-mac:
-    if: ${{ github.event.inputs.skip_mac_build != 'true' }}
-    runs-on: macos-latest  # 使用最新版本的 macOS
-    permissions:
-      contents: write  # 允许写入仓库内容
-
-    steps:
-      # 1. 检出代码
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # 2. 提取不含有 'v' 开头的标签字符
-      - name: Extract version without 'v'
-        run: |
-          TAG_NAME="${{ github.event.inputs.tag_name }}"
-          echo "Input tag name: $TAG_NAME"
-          if [[ "$TAG_NAME" == v* ]]; then
-            VERSION="${TAG_NAME#v}"
-          else
-            VERSION="$TAG_NAME"
-          fi
-          echo "Extracted version: $VERSION"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      # 3. 设置 Java 23 (Oracle OpenJDK 23.0.1 - aarch64)
-      - name: Set up JDK 23
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'oracle'
-          java-version: '23.0.1'
-          architecture: 'aarch64'  # 指定 aarch64 架构
-
-      # 4. 验证 Java 版本
-      - name: Verify Java version
-        run: java -version
-
-      # 5. 赋予 Gradle 执行权限（如果需要）
-      - name: Make Gradle executable
-        run: chmod +x gradlew
-
-      # 6. 运行 Gradle 任务，生成 .dmg 文件
-      - name: Run Gradle packageReleaseDistributionForCurrentOS
-        run: ./gradlew packageReleaseDistributionForCurrentOS
-
-      # 7. 列出生成的文件（调试）
-      - name: List generated files
-        run: |
-          ls -R composeApp/build/customOutputDir/main-release/dmg
-
-      # 8. 保存 .dmg 文件路径
-      - name: Save DMG path
-        run: |
-          echo "DMG_PATH=composeApp/build/customOutputDir/main-release/dmg/计时器倒计时-${{ env.VERSION }}.dmg" >> $GITHUB_ENV
-
-      # 9. 上传 .dmg 文件为构建产物
-      - name: Upload DMG as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: 计时器.dmg
-          path: ${{ env.DMG_PATH }}
-
-  # Job 2: 在 Windows 上构建 .exe 文件
   build-windows:
-    runs-on: windows-2022  # 使用 Windows Server 2022 环境
+    runs-on: windows-2022
     permissions:
-      contents: write  # 允许写入仓库内容
+      contents: write
 
     steps:
-      # 1. 安装 Chocolatey（如果未安装）
       - name: Install Chocolatey
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force
           [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
           iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-      # 2.安装 WiX Toolset
       - name: Install WiX Toolset
         run: |
           choco install wixtoolset -y --force
-          # choco upgrade wixtoolset -y  # 更新到最新版本
-          # 或者强制重新安装
 
-      # 3. 验证 WiX Toolset 安装
       - name: Verify WiX Toolset installation
         run: |
-          light.exe -ext WixUtilExtension -ext WixUIExtension -?
+          light.exe -version
+          Write-Output "WiX Toolset version verified."
 
-      # 4. 设置临时文件目录
       - name: Set temporary directory
         run: |
           $tempDir = "C:\temp"
           New-Item -ItemType Directory -Path $tempDir -Force
           echo "TEMP=$tempDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "TMP=$tempDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "JPACKAGE_TEMP=$tempDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      # 5. 验证权限
       - name: Verify permissions
         run: |
           $testFile = "$env:TEMP\test.txt"
@@ -121,11 +49,9 @@ jobs:
               exit 1
           }
 
-      # 6. 检出代码
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 7. 提取不含有 'v' 开头的标签字符
       - name: Extract version without 'v'
         run: |
           $TAG_NAME = "${{ github.event.inputs.tag_name }}"
@@ -138,28 +64,23 @@ jobs:
           Write-Output "Extracted version: $VERSION"
           echo "VERSION=$VERSION" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      # 8. 设置 Java 23 (Oracle OpenJDK 23.0.1 - x64)
       - name: Set up JDK 23
         uses: actions/setup-java@v3
         with:
           distribution: 'oracle'
           java-version: '23.0.1'
-          architecture: 'x64'  # 指定 x64 架构
+          architecture: 'x64'
 
-      # 9. 验证 Java 版本
       - name: Verify Java version
         run: java -version
 
-      # 10. 赋予 Gradle 执行权限（如果需要）
       - name: Make Gradle executable
         run: icacls gradlew /grant Everyone:F
 
-      # 11. 运行 Gradle 任务，生成 .exe 文件
       - name: Run Gradle packageReleaseExe
-        run: ./gradlew packageReleaseExe
-        continue-on-error: true  # 即使任务失败，继续执行后续步骤
+        run: ./gradlew packageReleaseExe --debug -Pwix.verbose=true -Pwix.iceValidation="ICE27;ICE30"
+        continue-on-error: true
 
-      # 12. 捕获标准输出日志并输出到 GitHub Actions 日志
       - name: Capture and output standard log
         run: |
           $stdoutLog = Get-ChildItem -Path "D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-out.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
@@ -170,142 +91,38 @@ jobs:
               Write-Output "No standard output log found."
           }
 
-      # 13. 捕获错误日志并输出到 GitHub Actions 日志
       - name: Capture and output error log
         run: |
           $stderrLog = Get-ChildItem -Path "D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-err.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
           if ($stderrLog) {
               Write-Output "Error log content:"
               Get-Content -Path $stderrLog.FullName
+              echo "ERROR_LOG_PATH=$($stderrLog.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           } else {
               Write-Output "No error log found."
           }
 
-      # 14. 上传日志文件为构建产物
-      - name: Upload logs as artifacts
+      - name: Upload logs and artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: build-logs
+          name: build-artifacts
           path: |
             D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe\*-out.txt
             D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe\*-err.txt
+            composeApp\build\customOutputDir\main-release\exe\*.exe
 
-      # 15. 如果任务失败，主动退出并标记为失败
       - name: Fail the job if Gradle task failed
-        if: ${{ failure() }}  # 仅在任务失败时运行
-        run: exit 1
+        if: ${{ failure() }}
+        run: |
+          Write-Output "Gradle task failed. Check the logs for more details."
+          exit 1
 
-      # 16. 保存 .exe 文件路径
       - name: Save EXE path
         run: |
           echo "EXE_PATH=composeApp\build\customOutputDir\main-release\exe\计时器倒计时-${{ env.VERSION }}.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      # 17. 上传 .exe 文件为构建产物
       - name: Upload EXE as artifact
         uses: actions/upload-artifact@v3
         with:
           name: 计时器.exe
           path: ${{ env.EXE_PATH }}
-
-  # Job 3: 创建 Release 并上传 .dmg 和 .exe 文件
-  create-release:
-    runs-on: ubuntu-latest  # 使用轻量级的 Ubuntu 环境
-    needs: [build-mac, build-windows]  # 依赖 build-mac 和 build-windows job
-    permissions:
-      contents: write  # 允许写入仓库内容
-
-    steps:
-      # 1. 检出代码
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # 2. 提取不含有 'v' 开头的标签字符
-      - name: Extract version without 'v'
-        run: |
-          TAG_NAME="${{ github.event.inputs.tag_name }}"
-          echo "Input tag name: $TAG_NAME"
-          if [[ "$TAG_NAME" == v* ]]; then
-            VERSION="${TAG_NAME#v}"
-          else
-            VERSION="$TAG_NAME"
-          fi
-          echo "Extracted version: $VERSION"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      # 3. 判断 Release 是否存在
-      - name: Check if Release exists
-        id: check_release
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const fs = require('fs');
-            try {
-              const release = await github.rest.repos.getReleaseByTag({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag: "${{ github.event.inputs.tag_name }}"
-              });
-              console.log("Release exists. Upload URL:", release.data.upload_url);
-              fs.appendFileSync(process.env.GITHUB_OUTPUT, `exists=true\n`);  // 设置 exists 输出
-              fs.appendFileSync(process.env.GITHUB_OUTPUT, `upload_url=${release.data.upload_url}\n`);  // 设置 upload_url 输出
-            } catch (error) {
-              if (error.status === 404) {
-                console.log("Release does not exist.");
-                fs.appendFileSync(process.env.GITHUB_OUTPUT, `exists=false\n`);  // 设置 exists 输出
-              } else {
-                throw error;
-              }
-            }
-
-      # 4. 如果 Release 不存在，创建新的 Release
-      - name: Create Release if not exists
-        if: steps.check_release.outputs.exists == 'false'
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.event.inputs.tag_name }}  # 使用输入的标签名称
-          release_name: ${{ github.event.inputs.tag_name }}
-          draft: false
-          prerelease: false
-
-      # 5. 设置 upload_url
-      - name: Set upload URL
-        id: set_upload_url
-        run: |
-          if [[ "${{ steps.check_release.outputs.exists }}" == "true" ]]; then
-            echo "Using existing Release upload URL"
-            echo "UPLOAD_URL=${{ steps.check_release.outputs.upload_url }}" >> $GITHUB_ENV
-          else
-            echo "Using new Release upload URL"
-            echo "UPLOAD_URL=${{ steps.create_release.outputs.upload_url }}" >> $GITHUB_ENV
-          fi
-
-      # 6. 下载构建产物 (.dmg 和 .exe 文件)
-      - name: Download DMG and EXE artifacts
-        uses: actions/download-artifact@v3
-        with:
-          path: ./artifacts
-
-      # 7. 上传 .dmg 文件到 Release
-      - name: Upload DMG Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.UPLOAD_URL }}  # 使用动态设置的 upload_url
-          asset_path: ./artifacts/计时器.dmg  # 下载的构建产物路径
-          asset_name: 计时器.dmg  # 替换为文件的名称
-          asset_content_type: application/x-apple-diskimage  # 设置 MIME 类型
-
-      # 8. 上传 .exe 文件到 Release
-      - name: Upload EXE Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.UPLOAD_URL }}  # 使用动态设置的 upload_url
-          asset_path: ./artifacts/计时器.exe  # 下载的构建产物路径
-          asset_name: 计时器.exe  # 替换为文件的名称
-          asset_content_type: application/x-msdownload  # 设置 MIME 类型
