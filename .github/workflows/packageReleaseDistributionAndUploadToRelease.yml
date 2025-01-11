@@ -105,7 +105,7 @@ jobs:
       - name: Run Gradle packageReleaseExe
         # run: ./gradlew packageReleaseExe --debug
         run: |
-          ./gradlew packageReleaseDistributionForCurrentOs  --debug -Pjpackage.installerOptions="--win-wxs-options -dProductCodepage=65001"
+          ./gradlew packageReleaseDistributionForCurrentOs -Pjpackage.installerOptions="--win-wxs-options -dProductCodepage=65001"
         continue-on-error: true
 
       # 13. 捕获标准输出日志并输出到 GitHub Actions 日志
@@ -144,7 +144,7 @@ jobs:
       # 16. 保存 .exe 文件路径
       - name: Save EXE path
         run: |
-          echo "EXE_PATH=composeApp\build\customOutputDir\main-release\exe\计时器倒计时-${{ env.VERSION }}.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "EXE_PATH=composeApp\build\customOutputDir\main-release\exe\multitimer-${{ env.VERSION }}.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       # 17. 上传 .exe 文件为构建产物
       - name: Upload EXE as artifact
