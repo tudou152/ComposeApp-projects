@@ -92,9 +92,14 @@ compose.desktop {
         nativeDistributions {
             outputBaseDir.set(project.layout.buildDirectory.dir("customOutputDir"))
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Exe)
-            packageName = "org.example.project"
+
+            packageName = "multitimer"
+            description = "计时器倒计时app"
+
+            copyright = "© 2021 DuguTech. All rights reserved."
             packageVersion = "1.0.0"
         }
+
         buildTypes.release.proguard {
             version.set("7.6.1")
             configurationFiles.from("compose-desktop.pro")
