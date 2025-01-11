@@ -127,5 +127,28 @@ jobs:
           if ($stderrLog) {
               Write-Output "Error log content:"
               Get-Content -Path $stderrLog.FullName
-              echo "ERROR_LOG_PATH=$($stderrLog.FullName)" | Out-File -FilePath
+          } else {
+              Write-Output "No error log found."
+          }
         continue-on-error: true
+
+      # 15. 上传日志文件为构建产物
+      - name: Upload logs as artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-logs
+          path: |
+            D:\a\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe\*-out.txt
+            D:\a\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe\*-err.txt
+
+      # 16. 保存 .exe 文件路径
+      - name: Save EXE path
+        run: |
+          echo "EXE_PATH=composeApp\build\customOutputDir\main-release\exe\计时器倒计时-${{ env.VERSION }}.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      # 17. 上传 .exe 文件为构建产物
+      - name: Upload EXE as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: 计时器.exe
+          path: ${{ env.EXE_PATH }}
