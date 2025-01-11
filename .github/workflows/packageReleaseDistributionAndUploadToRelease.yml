@@ -89,10 +89,12 @@ jobs:
           [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
           iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-      # 2. 安装 WiX Toolset
+      # 2.安装 WiX Toolset
       - name: Install WiX Toolset
         run: |
-          choco install wixtoolset -y
+          choco install wixtoolset -y --force
+          # choco upgrade wixtoolset -y  # 更新到最新版本
+          # 或者强制重新安装
 
       # 3. 验证 WiX Toolset 安装
       - name: Verify WiX Toolset installation
