@@ -15,21 +15,25 @@ jobs:
       contents: write
 
     steps:
-      # - name: Install Chocolatey
-      #   run: |
-      #     Set-ExecutionPolicy Bypass -Scope Process -Force
-      #     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-      #     iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+      # 1. 安装 Chocolatey（如果未安装）
+      - name: Install Chocolatey
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-      # - name: Install WiX Toolset
-      #   run: |
-      #     choco install wixtoolset -y --force
+      # 2. 安装 WiX Toolset
+      - name: Install WiX Toolset
+        run: |
+          choco install wixtoolset -y --force
 
-      # - name: Verify WiX Toolset installation
-      #   run: |
-      #     light.exe -version
-      #     Write-Output "WiX Toolset version verified."
+      # 3. 验证 WiX Toolset 安装
+      - name: Verify WiX Toolset installation
+        run: |
+          light.exe -version
+          Write-Output "WiX Toolset version verified."
 
+      # 4. 设置临时目录
       - name: Set temporary directory
         run: |
           $tempDir = "C:\temp"
@@ -38,6 +42,16 @@ jobs:
           echo "TMP=$tempDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "JPACKAGE_TEMP=$tempDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
+      # 5. 清理临时目录
+      - name: Clean temporary directory
+        run: |
+          $tempDir = "C:\temp\jdk.jpackage*"
+          if (Test-Path -Path $tempDir) {
+              Remove-Item -Recurse -Force -Path $tempDir
+          }
+          Write-Output "Temporary directory cleaned."
+
+      # 6. 验证权限
       - name: Verify permissions
         run: |
           $testFile = "$env:TEMP\test.txt"
@@ -49,9 +63,11 @@ jobs:
               exit 1
           }
 
+      # 7. 检出代码
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 8. 提取不含有 'v' 开头的标签字符
       - name: Extract version without 'v'
         run: |
           $TAG_NAME = "${{ github.event.inputs.tag_name }}"
@@ -64,6 +80,7 @@ jobs:
           Write-Output "Extracted version: $VERSION"
           echo "VERSION=$VERSION" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
+      # 9. 设置 Java 23 (Oracle OpenJDK 23.0.1 - x64)
       - name: Set up JDK 23
         uses: actions/setup-java@v3
         with:
@@ -71,58 +88,35 @@ jobs:
           java-version: '23.0.1'
           architecture: 'x64'
 
+      # 10. 验证 Java 版本
       - name: Verify Java version
         run: java -version
 
+      # 11. 赋予 Gradle 执行权限
       - name: Make Gradle executable
         run: icacls gradlew /grant Everyone:F
 
+      # 12. 运行 Gradle 任务，生成 .exe 文件（启用详细日志）
       - name: Run Gradle packageReleaseExe
-        run: ./gradlew packageReleaseExe
+        run: ./gradlew packageReleaseExe --debug -Pwix.verbose=true -Pwix.iceValidation="ICE27;ICE30"
         continue-on-error: true
 
-#      - name: Capture and output standard log
-#        run: |
-#          $stdoutLog = Get-ChildItem -Path "D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-out.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-#          if ($stdoutLog) {
-#              Write-Output "Standard output log content:"
-#              Get-Content -Path $stdoutLog.FullName
-#          } else {
-#              Write-Output "No standard output log found."
-#          }
-#
-#      - name: Capture and output error log
-#        run: |
-#          $stderrLog = Get-ChildItem -Path "D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-err.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-#          if ($stderrLog) {
-#              Write-Output "Error log content:"
-#              Get-Content -Path $stderrLog.FullName
-#              echo "ERROR_LOG_PATH=$($stderrLog.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-#          } else {
-#              Write-Output "No error log found."
-#          }
-
-      - name: Upload logs and artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-artifacts
-          path: |
-            D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe\*-out.txt
-            D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe\*-err.txt
-            composeApp\build\customOutputDir\main-release\exe\*.exe
-
-      - name: Fail the job if Gradle task failed
-        if: ${{ failure() }}
+      # 13. 捕获标准输出日志并输出到 GitHub Actions 日志
+      - name: Capture and output standard log
         run: |
-          Write-Output "Gradle task failed. Check the logs for more details."
-          exit 1
+          $stdoutLog = Get-ChildItem -Path "D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-out.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if ($stdoutLog) {
+              Write-Output "Standard output log content:"
+              Get-Content -Path $stdoutLog.FullName
+          } else {
+              Write-Output "No standard output log found."
+          }
 
-      - name: Save EXE path
+      # 14. 捕获错误日志并输出到 GitHub Actions 日志
+      - name: Capture and output error log
         run: |
-          echo "EXE_PATH=composeApp\build\customOutputDir\main-release\exe\计时器倒计时-${{ env.VERSION }}.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
-      - name: Upload EXE as artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: 计时器.exe
-          path: ${{ env.EXE_PATH }}
+          $stderrLog = Get-ChildItem -Path "D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-err.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if ($stderrLog) {
+              Write-Output "Error log content:"
+              Get-Content -Path $stderrLog.FullName
+              echo "ERROR_LOG_PATH=$($stderrLog.FullName)" | Out-File -FilePath
