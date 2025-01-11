@@ -81,26 +81,26 @@ jobs:
         run: ./gradlew packageReleaseExe --debug -Pwix.verbose=true -Pwix.iceValidation="ICE27;ICE30"
         continue-on-error: true
 
-      - name: Capture and output standard log
-        run: |
-          $stdoutLog = Get-ChildItem -Path "D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-out.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-          if ($stdoutLog) {
-              Write-Output "Standard output log content:"
-              Get-Content -Path $stdoutLog.FullName
-          } else {
-              Write-Output "No standard output log found."
-          }
-
-      - name: Capture and output error log
-        run: |
-          $stderrLog = Get-ChildItem -Path "D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-err.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-          if ($stderrLog) {
-              Write-Output "Error log content:"
-              Get-Content -Path $stderrLog.FullName
-              echo "ERROR_LOG_PATH=$($stderrLog.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          } else {
-              Write-Output "No error log found."
-          }
+#      - name: Capture and output standard log
+#        run: |
+#          $stdoutLog = Get-ChildItem -Path "D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-out.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+#          if ($stdoutLog) {
+#              Write-Output "Standard output log content:"
+#              Get-Content -Path $stdoutLog.FullName
+#          } else {
+#              Write-Output "No standard output log found."
+#          }
+#
+#      - name: Capture and output error log
+#        run: |
+#          $stderrLog = Get-ChildItem -Path "D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-err.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+#          if ($stderrLog) {
+#              Write-Output "Error log content:"
+#              Get-Content -Path $stderrLog.FullName
+#              echo "ERROR_LOG_PATH=$($stderrLog.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+#          } else {
+#              Write-Output "No error log found."
+#          }
 
       - name: Upload logs and artifacts
         uses: actions/upload-artifact@v3
