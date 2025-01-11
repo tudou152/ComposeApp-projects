@@ -15,20 +15,20 @@ jobs:
       contents: write
 
     steps:
-      - name: Install Chocolatey
-        run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
-          iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+      # - name: Install Chocolatey
+      #   run: |
+      #     Set-ExecutionPolicy Bypass -Scope Process -Force
+      #     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+      #     iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-      - name: Install WiX Toolset
-        run: |
-          choco install wixtoolset -y --force
+      # - name: Install WiX Toolset
+      #   run: |
+      #     choco install wixtoolset -y --force
 
-      - name: Verify WiX Toolset installation
-        run: |
-          light.exe -version
-          Write-Output "WiX Toolset version verified."
+      # - name: Verify WiX Toolset installation
+      #   run: |
+      #     light.exe -version
+      #     Write-Output "WiX Toolset version verified."
 
       - name: Set temporary directory
         run: |
