@@ -78,7 +78,7 @@ jobs:
         run: icacls gradlew /grant Everyone:F
 
       - name: Run Gradle packageReleaseExe
-        run: ./gradlew packageReleaseExe -Pwix.iceValidation="ICE27;ICE30"
+        run: ./gradlew packageReleaseExe
         continue-on-error: true
 
 #      - name: Capture and output standard log
