@@ -154,7 +154,7 @@ jobs:
 
       # 6. 运行 Gradle 任务，生成 .exe 文件
       - name: Run Gradle packageReleaseDistributionForCurrentOS
-        run: ./gradlew packageReleaseDistributionForCurrentOS -DoutputName=multitimer -Djpackage.jvmArgs="-Djpackage.arguments=--win-dir-chooser,--win-menu,--win-shortcut,--win-menu-group=MyApp,--win-upgrade-uuid=MyAppUUID,--win-per-user-install,--win-console
+        run: ./gradlew packageReleaseDistributionForCurrentOS -Djpackage.jvmArgs="-Djpackage.arguments=--win-dir-chooser,--win-menu,--win-shortcut,--win-menu-group=MyApp,--win-upgrade-uuid=MyAppUUID,--win-per-user-install,--win-console"
         continue-on-error: true  # 即使任务失败，继续执行后续步骤
 
       # 7. 捕获标准输出日志并输出到 GitHub Actions 日志
