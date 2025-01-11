@@ -27,6 +27,11 @@ jobs:
         run: |
           choco install wixtoolset -y --force
 
+      - name: Set WiX environment variables
+        run: |
+          echo "WIX=C:\Program Files (x86)\WiX Toolset v3.11\bin" >> $env:GITHUB_ENV
+          echo "$env:WIX" >> $env:GITHUB_PATH
+
       # 3. 验证 WiX Toolset 安装
       - name: Verify WiX Toolset installation
         run: |
@@ -111,6 +116,7 @@ jobs:
           } else {
               Write-Output "No standard output log found."
           }
+        continue-on-error: true
 
       # 14. 捕获错误日志并输出到 GitHub Actions 日志
       - name: Capture and output error log
@@ -120,3 +126,4 @@ jobs:
               Write-Output "Error log content:"
               Get-Content -Path $stderrLog.FullName
               echo "ERROR_LOG_PATH=$($stderrLog.FullName)" | Out-File -FilePath
+        continue-on-error: true
