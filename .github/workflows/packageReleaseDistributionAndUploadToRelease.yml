@@ -103,7 +103,9 @@ jobs:
 
       # 12. 运行 Gradle 任务，生成 .exe 文件（启用详细日志）
       - name: Run Gradle packageReleaseExe
-        run: ./gradlew packageReleaseExe --debug
+        # run: ./gradlew packageReleaseExe --debug
+        run: |
+          ./gradlew packageReleaseDistributionForCurrentOs  --debug -Pjpackage.installerOptions="--win-wxs-options -dProductCodepage=65001"
         continue-on-error: true
 
       # 13. 捕获标准输出日志并输出到 GitHub Actions 日志
