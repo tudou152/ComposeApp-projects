@@ -105,8 +105,7 @@ jobs:
       - name: Run Gradle packageReleaseExe
         # run: ./gradlew packageReleaseExe --debug
         run: |
-          ./gradlew packageReleaseDistributionForCurrentOs \
-          -Pjpackage.installerOptions.add("--win-wxs-options=-dProductCodepage=65001") 
+          ./gradlew packageReleaseDistributionForCurrentOs -Pjpackage.installerOptions.add("--win-wxs-options=-dProductCodepage=65001") 
         continue-on-error: true
 
       # 13. 捕获标准输出日志并输出到 GitHub Actions 日志
