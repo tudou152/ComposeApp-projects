@@ -89,17 +89,17 @@ jobs:
           [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
           iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-      # 1. 安装 WiX Toolset
+      # 2. 安装 WiX Toolset
       - name: Install WiX Toolset
         run: |
           choco install wixtoolset -y
 
-      # 2. 验证 WiX Toolset 安装
+      # 3. 验证 WiX Toolset 安装
       - name: Verify WiX Toolset installation
         run: |
           light.exe -ext WixUtilExtension -ext WixUIExtension -?
 
-      # 3. 设置临时文件目录
+      # 4. 设置临时文件目录
       - name: Set temporary directory
         run: |
           $tempDir = "C:\temp"
@@ -107,7 +107,7 @@ jobs:
           echo "TEMP=$tempDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "TMP=$tempDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      # 4. 验证权限
+      # 5. 验证权限
       - name: Verify permissions
         run: |
           $testFile = "$env:TEMP\test.txt"
@@ -119,11 +119,11 @@ jobs:
               exit 1
           }
 
-      # 1. 检出代码
+      # 6. 检出代码
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. 提取不含有 'v' 开头的标签字符
+      # 7. 提取不含有 'v' 开头的标签字符
       - name: Extract version without 'v'
         run: |
           $TAG_NAME = "${{ github.event.inputs.tag_name }}"
@@ -136,7 +136,7 @@ jobs:
           Write-Output "Extracted version: $VERSION"
           echo "VERSION=$VERSION" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      # 3. 设置 Java 23 (Oracle OpenJDK 23.0.1 - x64)
+      # 8. 设置 Java 23 (Oracle OpenJDK 23.0.1 - x64)
       - name: Set up JDK 23
         uses: actions/setup-java@v3
         with:
@@ -144,20 +144,20 @@ jobs:
           java-version: '23.0.1'
           architecture: 'x64'  # 指定 x64 架构
 
-      # 4. 验证 Java 版本
+      # 9. 验证 Java 版本
       - name: Verify Java version
         run: java -version
 
-      # 5. 赋予 Gradle 执行权限（如果需要）
+      # 10. 赋予 Gradle 执行权限（如果需要）
       - name: Make Gradle executable
         run: icacls gradlew /grant Everyone:F
 
-      # 6. 运行 Gradle 任务，生成 .exe 文件
+      # 11. 运行 Gradle 任务，生成 .exe 文件
       - name: Run Gradle packageReleaseDistributionForCurrentOS
         run: ./gradlew packageReleaseDistributionForCurrentOS
         continue-on-error: true  # 即使任务失败，继续执行后续步骤
 
-      # 7. 捕获标准输出日志并输出到 GitHub Actions 日志
+      # 12. 捕获标准输出日志并输出到 GitHub Actions 日志
       - name: Capture and output standard log
         run: |
           $stdoutLog = Get-ChildItem -Path "D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-out.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
@@ -168,7 +168,7 @@ jobs:
               Write-Output "No standard output log found."
           }
 
-      # 8. 捕获错误日志并输出到 GitHub Actions 日志
+      # 13. 捕获错误日志并输出到 GitHub Actions 日志
       - name: Capture and output error log
         run: |
           $stderrLog = Get-ChildItem -Path "D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe" -Filter "*-err.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
@@ -179,7 +179,7 @@ jobs:
               Write-Output "No error log found."
           }
 
-      # 9. 上传日志文件为构建产物
+      # 14. 上传日志文件为构建产物
       - name: Upload logs as artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -188,74 +188,17 @@ jobs:
             D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe\*-out.txt
             D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe\*-err.txt
 
-      # 10. 如果任务失败，主动退出并标记为失败
+      # 15. 如果任务失败，主动退出并标记为失败
       - name: Fail the job if Gradle task failed
         if: ${{ failure() }}  # 仅在任务失败时运行
         run: exit 1
 
-      # 6. 检查 .wixobj 文件
-      - name: Check .wixobj files
-        run: |
-          $wixobjFiles = Get-ChildItem -Path "$env:TEMP\jdk.jpackage*\wixobj" -Filter "*.wixobj"
-          if ($wixobjFiles) {
-              Write-Output "Found .wixobj files:"
-              $wixobjFiles | ForEach-Object { Write-Output $_.FullName }
-          } else {
-              Write-Output "No .wixobj files found."
-          }
-
-      # 6. 检查 .wxs 文件
-      - name: Check .wxs files
-        run: |
-          $wxsFiles = Get-ChildItem -Path "$env:TEMP\jdk.jpackage*\config" -Filter "*.wxs"
-          if ($wxsFiles) {
-              Write-Output "Found .wxs files:"
-              $wxsFiles | ForEach-Object { Write-Output $_.FullName }
-          } else {
-              Write-Output "No .wxs files found."
-          }
-
-      # 7. 捕获并输出日志
-      - name: Capture and output logs
-        if: ${{ failure() }}
-        run: |
-          $stdoutLog = Get-ChildItem -Path "$env:TEMP\logs" -Filter "*.out.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-          if ($stdoutLog) {
-              Write-Output "Standard output log content:"
-              Get-Content -Path $stdoutLog.FullName
-          } else {
-              Write-Output "No standard output log found."
-          }
-
-          $stderrLog = Get-ChildItem -Path "$env:TEMP\logs" -Filter "*.err.txt" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-          if ($stderrLog) {
-              Write-Output "Error log content:"
-              Get-Content -Path $stderrLog.FullName
-          } else {
-              Write-Output "No error log found."
-          }
-
-      # 8. 上传日志文件
-      - name: Upload logs as artifacts
-        if: ${{ failure() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-logs
-          path: |
-            $env:TEMP\logs\*.out.txt
-            $env:TEMP\logs\*.err.txt
-
-      # 9. 如果任务失败，主动退出并标记为失败
-      - name: Fail the job if Gradle task failed
-        if: ${{ failure() }}
-        run: exit 1
-
-      # 8. 保存 .exe 文件路径
+      # 16. 保存 .exe 文件路径
       - name: Save EXE path
         run: |
           echo "EXE_PATH=composeApp\build\customOutputDir\main-release\exe\计时器倒计时-${{ env.VERSION }}.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      # 12. 上传 .exe 文件为构建产物
+      # 17. 上传 .exe 文件为构建产物
       - name: Upload EXE as artifact
         uses: actions/upload-artifact@v3
         with:
