@@ -1,12 +1,15 @@
 name: windows版本打包
 
 on:
-  workflow_dispatch: # 手动触发 (变量引用的时候使用 ${{ github.event.inputs.tag_name }})
-    inputs:
-      tag_name:
-        description: 'Tag name for the release'
-        required: true
-        default: 'v1.0.0'
+  push:
+    tags:
+      - 'v*'  # 匹配所有 Tag
+#  workflow_dispatch: # 手动触发 (变量引用的时候使用)
+#    inputs:
+#      tag_name:
+#        description: 'Tag name for the release'
+#        required: true
+#        default: 'v1.0.0'
 #  push:
 #    branches:
 #      - main  # 你可以指定特定的分支，例如 main 或 master
@@ -14,6 +17,9 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    env:
+#      TAG_NAME: ${{ github.event.inputs.tag_name }}  #手动触发的时候变量
+      TAG_NAME: ${{ github.ref_name }} # push tag 触发的变量
     strategy:
       matrix:
         os: [windows-latest, macos-latest]
@@ -85,6 +91,8 @@ jobs:
   # Job 3: 创建 Release 并上传 .dmg 和 .exe 文件
   create-release:
     runs-on: ubuntu-latest  # 使用轻量级的 Ubuntu 环境
+    env:
+      APP_NAME: multitimer
     needs: [build]  # 依赖 build-mac 和 build-windows job
     permissions:
       contents: write  # 允许写入仓库内容
@@ -105,7 +113,7 @@ jobs:
               const release = await github.rest.repos.getReleaseByTag({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                tag: "${{ github.event.inputs.tag_name }}"
+                tag: "${{ env.TAG_NAME }}"
               });
               console.log("Release exists. Upload URL:", release.data.upload_url);
               fs.appendFileSync(process.env.GITHUB_OUTPUT, `exists=true\n`);  // 设置 exists 输出
@@ -128,8 +136,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.event.inputs.tag_name }}  # 使用输入的标签名称
-          release_name: ${{ github.event.inputs.tag_name }}
+          tag_name: ${{ env.TAG_NAME }}  # 使用输入的标签名称
+          release_name: ${{ env.TAG_NAME }}
           draft: false
           prerelease: false
 
@@ -166,7 +174,7 @@ jobs:
       # 7. 提取不含有 'v' 开头的标签字符
       - name: Extract version without 'v'
         run: |
-          TAG_NAME="${{ github.event.inputs.tag_name }}"
+          TAG_NAME="${{ env.TAG_NAME }}"
           echo "Input tag name: $TAG_NAME"
           if [[ "$TAG_NAME" == v* ]]; then
             VERSION="${TAG_NAME#v}"
@@ -183,28 +191,28 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ env.UPLOAD_URL }}  # 使用动态设置的 upload_url
-          asset_path: ./artifacts/exe/multitimer-${{ env.VERSION }}.exe  # 下载的构建产物路径
-          asset_name: multitimer-${{ env.VERSION }}.exe  # 替换为文件的名称
+          asset_path: ./artifacts/exe/${{ env.APP_NAME }}-${{ env.VERSION }}.exe  # 下载的构建产物路径
+          asset_name: ${{ env.APP_NAME }}-${{ env.VERSION }}.exe  # 替换为文件的名称
           asset_content_type: application/x-msdownload  # 设置 MIME 类型
 
       # 8. 上传 .msi 文件到 Release
-      - name: Upload EXE Release Asset
+      - name: Upload msi Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ env.UPLOAD_URL }}  # 使用动态设置的 upload_url
-          asset_path: ./artifacts/msi/multitimer-${{ env.VERSION }}.msi  # 下载的构建产物路径
-          asset_name: multitimer-${{ env.VERSION }}.msi  # 替换为文件的名称
+          asset_path: ./artifacts/msi/${{ env.APP_NAME }}-${{ env.VERSION }}.msi  # 下载的构建产物路径
+          asset_name: ${{ env.APP_NAME }}-${{ env.VERSION }}.msi  # 替换为文件的名称
           asset_content_type: application/x-msi  # 设置 MIME 类型
 
       # 8. 上传 .msi 文件到 Release
-      - name: Upload EXE Release Asset
+      - name: Upload dmg Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ env.UPLOAD_URL }}  # 使用动态设置的 upload_url
-          asset_path: ./artifacts/dmg/multitimer-${{ env.VERSION }}.dmg  # 下载的构建产物路径
-          asset_name: multitimer-${{ env.VERSION }}.dmg  # 替换为文件的名称
+          asset_path: ./artifacts/dmg/${{ env.APP_NAME }}-${{ env.VERSION }}.dmg  # 下载的构建产物路径
+          asset_name: ${{ env.APP_NAME }}-${{ env.VERSION }}.dmg  # 替换为文件的名称
           asset_content_type: application/x-apple-diskimage  # 设置 MIME 类型
