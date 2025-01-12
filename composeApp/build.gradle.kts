@@ -94,13 +94,13 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Exe)
 
             packageName = "multitimer"
-
+            description = "\u8ba1\u65f6\u5668\u5012\u8ba1\u65f6app"  // "计时器倒计时app" 的 Unicode 转义
             copyright = "© 2021 DuguTech. All rights reserved."
             packageVersion = "1.0.0"
 
 
             windows {
-                vendor = "武汉独孤科技工作室"
+                vendor = "\u6b66\u6c49\u72ec\u5b64\u79d1\u6280\u5de5\u4f5c\u5ba4"//"武汉独孤科技工作室"
             }
         }
 
