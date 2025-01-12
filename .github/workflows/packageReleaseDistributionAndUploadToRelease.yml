@@ -10,6 +10,21 @@ jobs:
     runs-on: windows-latest  # 使用最新版本的 windows
 
     steps:
+      - name: Uninstall WiX Toolset
+        shell: powershell
+        run: |
+          choco uninstall wixtoolset -y
+
+      - name: Install WiX Toolset v3.11.2
+        shell: powershell
+        run: |
+          choco install wixtoolset --version 3.11.2 -y
+
+      - name: Verify installation
+        shell: powershell
+        run: |
+          light.exe -?
+
       # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v4
