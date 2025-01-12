@@ -13,7 +13,7 @@ kotlin {
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_18)
         }
     }
     
@@ -76,8 +76,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_18
+        targetCompatibility = JavaVersion.VERSION_18
     }
 }
 
@@ -101,7 +101,7 @@ compose.desktop {
         }
 
         buildTypes.release.proguard {
-            version.set("7.6.1")
+//            version.set("7.6.1")
             configurationFiles.from("compose-desktop.pro")
         }
     }
