@@ -10,13 +10,6 @@ jobs:
     runs-on: windows-latest  # 使用最新版本的 windows
 
     steps:
-      - name: Set Chinese locale
-        run: |
-          Set-WinSystemLocale -SystemLocale zh-CN
-
-      - name: Install WiX Toolset
-        run: choco install wixtoolset -y
-
       # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v4
