@@ -146,14 +146,18 @@ jobs:
           fi
 
       # 6. 下载构建产物 (.dmg 和 .exe 文件)
-      - name: Download DMG and EXE artifacts
+      - name: Download windows-package-release
         uses: actions/download-artifact@v4
         with:
-          name: |
-            windows-package-release
-            macos-package-release
+          name: windows-package-release
           path: ./artifacts
-          merge: true
+
+      # 6. 下载构建产物 (.dmg 和 .exe 文件)
+      - name: Download macos-package-release
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-package-release
+          path: ./artifacts
 
       - name: List extracted files
         run: |
