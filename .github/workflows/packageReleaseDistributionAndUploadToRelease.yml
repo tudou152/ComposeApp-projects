@@ -121,7 +121,7 @@ jobs:
 
       # 6. 下载构建产物 (.dmg 和 .exe 文件)
       - name: Download DMG and EXE artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: package-release
           path: ./artifacts
