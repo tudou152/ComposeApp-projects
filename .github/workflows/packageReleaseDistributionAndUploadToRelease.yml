@@ -123,15 +123,16 @@ jobs:
       - name: Download DMG and EXE artifacts
         uses: actions/download-artifact@v3
         with:
-          path: ./package-release
+          name: package-release
+          path: ./artifacts
 
-      - name: Unzip package-release
+      - name: Unzip artifacts
         run: |
-          unzip ./package-release/*.zip -d ./package-release/
+          unzip ./artifacts/*.zip -d ./artifacts/
 
       - name: List extracted files
         run: |
-          ls -R ./package-release/
+          ls -R ./artifacts/
 
       # 7. 提取不含有 'v' 开头的标签字符
       - name: Extract version without 'v'
