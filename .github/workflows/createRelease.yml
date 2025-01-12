@@ -1,53 +1,29 @@
-name: 创建标签测试
-
 on:
   push:
+    # Sequence of patterns matched against refs/tags
     tags:
-      - 'v*'  # 匹配所有 Tag
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Create Release
 
 jobs:
-  # Job 3: 创建 Release 并上传 .dmg 和 .exe 文件
-  create-release:
-    runs-on: ubuntu-latest  # 使用轻量级的 Ubuntu 环境
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      APP_NAME: multitimer
-      TAG_NAME: ${{ github.ref_name }} # push tag 触发的变量
-    permissions:
-      contents: write  # 允许写入仓库内容
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
     steps:
-      # 2. 判断 Release 是否存在
-      - name: Check if Release exists
-        id: check_release
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const fs = require('fs');
-            try {
-              const release = await github.rest.repos.getReleaseByTag({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tag: "${{ env.TAG_NAME }}"
-              });
-              console.log("Release exists. Upload URL:", release.data.upload_url);
-              fs.appendFileSync(process.env.GITHUB_OUTPUT, `exists=true\n`);  // 设置 exists 输出
-              fs.appendFileSync(process.env.GITHUB_OUTPUT, `upload_url=${release.data.upload_url}\n`);  // 设置 upload_url 输出
-            } catch (error) {
-              if (error.status === 404) {
-                console.log("Release does not exist.");
-                fs.appendFileSync(process.env.GITHUB_OUTPUT, `exists=false\n`);  // 设置 exists 输出
-              } else {
-                throw error;
-              }
-            }
-
-      # 3. 如果 Release 不存在，创建新的 Release
-      - name: Create Release if not exists
-        if: steps.check_release.outputs.exists == 'false'
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Create Release
         id: create_release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
         with:
-          tag_name: ${{ env.TAG_NAME }}  # 使用输入的标签名称
-          release_name: ${{ env.TAG_NAME }}
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Changes in this Release
+            - First Change
+            - Second Change
           draft: false
           prerelease: false
