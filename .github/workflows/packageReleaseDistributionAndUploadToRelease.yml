@@ -123,15 +123,15 @@ jobs:
       - name: Download DMG and EXE artifacts
         uses: actions/download-artifact@v3
         with:
-          path: ./artifacts
+          path: ./package-release
 
-      - name: Unzip artifacts
+      - name: Unzip package-release
         run: |
-          unzip ./artifacts/*.zip -d ./artifacts/
+          unzip ./package-release/*.zip -d ./package-release/
 
       - name: List extracted files
         run: |
-          ls -R ./artifacts/
+          ls -R ./package-release/
 
       # 7. 提取不含有 'v' 开头的标签字符
       - name: Extract version without 'v'
@@ -154,7 +154,7 @@ jobs:
         with:
           upload_url: ${{ env.UPLOAD_URL }}  # 使用动态设置的 upload_url
           asset_path: |
-            ./artifacts/exe/*.exe  # 下载的构建产物路径
-            ./artifacts/msi/*.msi  # 下载的构建产物路径
+            ./package-release/exe/*.exe  # 下载的构建产物路径
+            ./package-release/msi/*.msi  # 下载的构建产物路径
           asset_name: multitimer-${{ env.VERSION }}.exe  # 替换为文件的名称
           asset_content_type: application/x-msdownload  # 设置 MIME 类型
