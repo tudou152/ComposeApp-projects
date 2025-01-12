@@ -97,12 +97,10 @@ jobs:
     needs: [build]  # 依赖 build-mac 和 build-windows job
     permissions:
       contents: write  # 允许写入仓库内容
-
     steps:
       # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v3
-
       # 2. 判断 Release 是否存在
       - name: Check if Release exists
         id: check_release
