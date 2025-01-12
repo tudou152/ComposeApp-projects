@@ -101,6 +101,7 @@ jobs:
       # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v3
+
       # 2. 判断 Release 是否存在
       - name: Check if Release exists
         id: check_release
@@ -125,7 +126,6 @@ jobs:
                 throw error;
               }
             }
-
 
       # 3. 如果 Release 不存在，创建新的 Release
       - name: Create Release if not exists
