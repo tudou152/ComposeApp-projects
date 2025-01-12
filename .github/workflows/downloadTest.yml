@@ -39,7 +39,7 @@ jobs:
 
       - name: Unzip artifacts
         run: |
-          unzip ./artifacts/*.zip -d ./artifacts/
+          unzip ./artifacts/package-release -d ./artifacts/
 
       - name: List extracted files
         run: |
