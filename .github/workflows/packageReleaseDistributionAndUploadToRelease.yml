@@ -13,7 +13,11 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest  # 使用最新版本的 windows
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+
     steps:
       # 1. 检出代码
       - name: Checkout code
@@ -25,11 +29,11 @@ jobs:
         with:
           distribution: 'oracle'
           java-version: '23.0.1'
-          architecture: 'x64'  # 指定 aarch64 架构
+          architecture: 'x64'
 
-      # 3. 验证 Java 版本
-      - name: Verify Java version
-        run: java -version
+#      # 3. 验证 Java 版本
+#      - name: Verify Java version
+#        run: java -version
 
       # 4. 赋予 Gradle 执行权限（如果需要）
       - name: Make Gradle executable
@@ -41,20 +45,42 @@ jobs:
         continue-on-error: true  # 即使任务失败，也继续执行后续步骤
 
       # 6. 上传日志文件到 Artifacts
-      - name: Upload logs to Artifacts
+      - if: matrix.os == 'windows-latest'
+        name: Upload logs to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: package-release-logs  # Artifact 的名称
+          name: windows-package-release-logs  # Artifact 的名称
           path: D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageRelease*  # 要上传的目录
 
-      # 7. 上传打包出来的文件到 Artifacts
-      - name: Upload Releases to Artifacts
+      # 7. 上传Windows打包出来的文件到 Artifacts
+      - if: matrix.os == 'windows-latest'
+        name: Upload Releases to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: package-release  # Artifact 的名称
+          name: windows-package-release  # Artifact 的名称
           path: |
             D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\customOutputDir\main-release\*
 
+      - if: matrix.os == 'macos-latest'
+        name: Upload logs to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-package-release-logs  # Artifact 的名称
+          path: composeApp\build\compose\logs\packageRelease*  # 要上传的目录
+
+      # 8. 列出生成的文件（调试）
+      - if: matrix.os == 'macos-latest'
+        name: List MacOS generated files
+        run: |
+          ls -R composeApp/build/customOutputDir/main-release/*
+
+      # 10. 上传 .dmg 文件为构建产物
+      - if: matrix.os == 'macos-latest'
+        name: Upload MacOS DMG as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-package-release
+          path: composeApp/build/customOutputDir/main-release/*
 
   # Job 3: 创建 Release 并上传 .dmg 和 .exe 文件
   create-release:
@@ -123,8 +149,11 @@ jobs:
       - name: Download DMG and EXE artifacts
         uses: actions/download-artifact@v4
         with:
-          name: package-release
+          name: |
+            windows-package-release
+            macos-package-release
           path: ./artifacts
+          merge: true
 
       - name: List extracted files
         run: |
@@ -145,7 +174,7 @@ jobs:
 
       # 8. 上传 .exe 文件到 Release
       - name: Upload EXE Release Asset
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -156,7 +185,7 @@ jobs:
 
       # 8. 上传 .msi 文件到 Release
       - name: Upload EXE Release Asset
-        uses: actions/upload-release-asset@v1
+        uses: actions/upload-release-asset@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -164,3 +193,14 @@ jobs:
           asset_path: ./artifacts/msi/multitimer-${{ env.VERSION }}.msi  # 下载的构建产物路径
           asset_name: multitimer-${{ env.VERSION }}.msi  # 替换为文件的名称
           asset_content_type: application/x-msi  # 设置 MIME 类型
+
+      # 8. 上传 .msi 文件到 Release
+      - name: Upload EXE Release Asset
+        uses: actions/upload-release-asset@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.UPLOAD_URL }}  # 使用动态设置的 upload_url
+          asset_path: ./artifacts/dmg/multitimer-${{ env.VERSION }}.dmg  # 下载的构建产物路径
+          asset_name: multitimer-${{ env.VERSION }}.dmg  # 替换为文件的名称
+          asset_content_type: application/x-apple-diskimage  # 设置 MIME 类型
