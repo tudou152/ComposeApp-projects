@@ -10,6 +10,9 @@ jobs:
     runs-on: windows-latest  # 使用最新版本的 windows
 
     steps:
+      - name: Install WiX Toolset
+        run: choco install wixtoolset -y
+
       # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,7 +35,7 @@ jobs:
 
       # 5. 运行 Gradle 任务
       - name: Run Gradle packageReleaseDistributionForCurrentOS
-        run: ./gradlew packageReleaseDistributionForCurrentOS
+        run: ./gradlew packageReleaseDistributionForCurrentOS -Djpackage.verbose=true
         continue-on-error: true  # 即使任务失败，也继续执行后续步骤
 
       # 6. 上传日志文件到 Artifacts
