@@ -93,6 +93,7 @@ jobs:
     runs-on: ubuntu-latest  # 使用轻量级的 Ubuntu 环境
     env:
       APP_NAME: multitimer
+      TAG_NAME: ${{ github.ref_name }} # push tag 触发的变量
     needs: [build]  # 依赖 build-mac 和 build-windows job
     permissions:
       contents: write  # 允许写入仓库内容
