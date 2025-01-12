@@ -35,7 +35,7 @@ jobs:
 
       # 5. 运行 Gradle 任务
       - name: Run Gradle packageReleaseDistributionForCurrentOS
-        run: ./gradlew packageReleaseDistributionForCurrentOS -Djpackage.verbose=true
+        run: ./gradlew packageReleaseDistributionForCurrentOS
         continue-on-error: true  # 即使任务失败，也继续执行后续步骤
 
       # 6. 上传日志文件到 Artifacts
