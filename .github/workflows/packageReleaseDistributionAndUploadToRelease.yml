@@ -33,3 +33,10 @@ jobs:
       # 5. 运行 Gradle 任务
       - name: Run Gradle packageReleaseDistributionForCurrentOS
         run: ./gradlew packageReleaseDistributionForCurrentOS
+
+      # 6. 上传日志文件到 Artifacts
+      - name: Upload logs to Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: package-release-logs  # Artifact 的名称
+          path: D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe  # 要上传的目录
