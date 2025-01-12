@@ -93,6 +93,7 @@ jobs:
               }
             }
 
+
       # 3. 如果 Release 不存在，创建新的 Release
       - name: Create Release if not exists
         if: steps.check_release.outputs.exists == 'false'
@@ -124,6 +125,14 @@ jobs:
         with:
           path: ./artifacts
 
+      - name: Unzip artifacts
+        run: |
+          unzip ./artifacts/*.zip -d ./artifacts/
+
+      - name: List extracted files
+        run: |
+          ls -R ./artifacts/
+
       # 7. 提取不含有 'v' 开头的标签字符
       - name: Extract version without 'v'
         run: |
@@ -144,6 +153,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ env.UPLOAD_URL }}  # 使用动态设置的 upload_url
-          asset_path: ./artifacts/*.exe  # 下载的构建产物路径
+          asset_path: |
+            ./artifacts/exe/*.exe  # 下载的构建产物路径
+            ./artifacts/msi/*.msi  # 下载的构建产物路径
           asset_name: multitimer-${{ env.VERSION }}.exe  # 替换为文件的名称
           asset_content_type: application/x-msdownload  # 设置 MIME 类型
