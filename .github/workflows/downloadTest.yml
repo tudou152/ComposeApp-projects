@@ -37,6 +37,10 @@ jobs:
           name: package-release
           path: ./artifacts
 
+      - name: List extracted files
+        run: |
+          ls -R ./artifacts
+
       - name: Unzip artifacts
         run: |
           unzip ./artifacts/package-release -d ./artifacts/
