@@ -1,35 +1,20 @@
 name: windows版本打包
 
 on:
-  push:
-    branches:
-      - main  # 你可以指定特定的分支，例如 main 或 master
+  workflow_dispatch: # 手动触发 (变量引用的时候使用 ${{ github.event.inputs.tag_name }})
+    inputs:
+      tag_name:
+        description: 'Tag name for the release'
+        required: true
+        default: 'v1.0.0'
+#  push:
+#    branches:
+#      - main  # 你可以指定特定的分支，例如 main 或 master
 
 jobs:
   build:
     runs-on: windows-latest  # 使用最新版本的 windows
-
     steps:
-      - name: Uninstall WiX Toolset
-        shell: powershell
-        run: |
-          choco uninstall wixtoolset -y
-
-      - name: Install WiX Toolset v3.11.2
-        shell: powershell
-        run: |
-          choco install wixtoolset --version 3.11.2 -y
-
-      - name: Add WiX Toolset to PATH
-        run: |
-          $wixPath = "C:\Program Files (x86)\WiX Toolset v3.11\bin"
-          $env:Path += ";$wixPath"
-
-      - name: Verify installation
-        shell: powershell
-        run: |
-          light.exe -?
-
       # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v4
@@ -60,7 +45,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: package-release-logs  # Artifact 的名称
-          path: D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe  # 要上传的目录
+          path: D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageRelease*  # 要上传的目录
 
       # 7. 上传打包出来的文件到 Artifacts
       - name: Upload Releases to Artifacts
@@ -68,5 +53,97 @@ jobs:
         with:
           name: package-release  # Artifact 的名称
           path: |
-            D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\customOutputDir\main-release\exe
-            D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\customOutputDir\main-release\msi
+            D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\customOutputDir\main-release\*
+
+
+  # Job 3: 创建 Release 并上传 .dmg 和 .exe 文件
+  create-release:
+    runs-on: ubuntu-latest  # 使用轻量级的 Ubuntu 环境
+    needs: [build]  # 依赖 build-mac 和 build-windows job
+    permissions:
+      contents: write  # 允许写入仓库内容
+
+    steps:
+      # 1. 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. 判断 Release 是否存在
+      - name: Check if Release exists
+        id: check_release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            try {
+              const release = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag: "${{ github.event.inputs.tag_name }}"
+              });
+              console.log("Release exists. Upload URL:", release.data.upload_url);
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, `exists=true\n`);  // 设置 exists 输出
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, `upload_url=${release.data.upload_url}\n`);  // 设置 upload_url 输出
+            } catch (error) {
+              if (error.status === 404) {
+                console.log("Release does not exist.");
+                fs.appendFileSync(process.env.GITHUB_OUTPUT, `exists=false\n`);  // 设置 exists 输出
+              } else {
+                throw error;
+              }
+            }
+
+      # 3. 如果 Release 不存在，创建新的 Release
+      - name: Create Release if not exists
+        if: steps.check_release.outputs.exists == 'false'
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.tag_name }}  # 使用输入的标签名称
+          release_name: ${{ github.event.inputs.tag_name }}
+          draft: false
+          prerelease: false
+
+      # 5. 设置 upload_url
+      - name: Set upload URL
+        id: set_upload_url
+        run: |
+          if [[ "${{ steps.check_release.outputs.exists }}" == "true" ]]; then
+            echo "Using existing Release upload URL"
+            echo "UPLOAD_URL=${{ steps.check_release.outputs.upload_url }}" >> $GITHUB_ENV
+          else
+            echo "Using new Release upload URL"
+            echo "UPLOAD_URL=${{ steps.create_release.outputs.upload_url }}" >> $GITHUB_ENV
+          fi
+
+      # 6. 下载构建产物 (.dmg 和 .exe 文件)
+      - name: Download DMG and EXE artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: ./artifacts
+
+      # 7. 提取不含有 'v' 开头的标签字符
+      - name: Extract version without 'v'
+        run: |
+          TAG_NAME="${{ github.event.inputs.tag_name }}"
+          echo "Input tag name: $TAG_NAME"
+          if [[ "$TAG_NAME" == v* ]]; then
+            VERSION="${TAG_NAME#v}"
+          else
+            VERSION="$TAG_NAME"
+          fi
+          echo "Extracted version: $VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      # 8. 上传 .exe 文件到 Release
+      - name: Upload EXE Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.UPLOAD_URL }}  # 使用动态设置的 upload_url
+          asset_path: ./artifacts/*.exe  # 下载的构建产物路径
+          asset_name: multitimer-${{ env.VERSION }}.exe  # 替换为文件的名称
+          asset_content_type: application/x-msdownload  # 设置 MIME 类型
