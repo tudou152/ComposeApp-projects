@@ -1,0 +1,68 @@
+name: Send Release Email with Attachment
+on:
+  release:
+    types: [published]  # 监听 release 发布事件
+
+jobs:
+  send-email:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Download release assets
+        id: download-assets
+        run: |
+          # 获取 Release 的 assets
+          ASSETS_URL="${{ github.event.release.assets_url }}"
+          ASSETS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$ASSETS_URL" | jq -r '.[].browser_download_url')
+
+          # 下载所有 assets
+          mkdir -p release-assets
+          for ASSET_URL in $ASSETS; do
+            wget -P release-assets "$ASSET_URL"
+          done
+
+          # 将 assets 路径设置为输出变量
+          echo "ASSETS_PATH=release-assets" >> $GITHUB_ENV
+
+      - name: Extract release information
+        id: release
+        run: |
+          RELEASE_TAG_NAME=${{ github.event.release.tag_name }}
+          RELEASE_NAME="${{ github.event.release.name }}"
+          RELEASE_BODY="${{ github.event.release.body }}"
+          RELEASE_URL="${{ github.event.release.html_url }}"
+
+          # 将 Release 信息格式化为邮件内容
+          EMAIL_BODY=$(cat <<EOF
+          A new release has been published!
+
+          Release Tag: $RELEASE_TAG_NAME
+          Release Name: $RELEASE_NAME
+          Release Notes:
+          $RELEASE_BODY
+
+          View Release: $RELEASE_URL
+          EOF
+          )
+
+          # 将邮件内容设置为输出变量
+          echo "EMAIL_BODY<<EOF" >> $GITHUB_ENV
+          echo "$EMAIL_BODY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Send email with attachments
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.163.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}  # 你的 163 邮箱地址
+          password: ${{ secrets.EMAIL_PASSWORD }}  # 你的 163 邮箱授权码
+          subject: "New Release: ${{ github.event.release.tag_name }}"
+          body: ${{ env.EMAIL_BODY }}
+          to: 414078812@qq.com  # 收件人邮箱
+          from: ${{ secrets.EMAIL_USERNAME }}  # 发件人邮箱
+          content_type: text/plain
+          attachments: ${{ env.ASSETS_PATH }}/*  # 附件路径
