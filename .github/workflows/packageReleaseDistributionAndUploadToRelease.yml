@@ -174,7 +174,7 @@ jobs:
 
       # 8. 上传 .exe 文件到 Release
       - name: Upload EXE Release Asset
-        uses: actions/upload-release-asset@v3
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -185,7 +185,7 @@ jobs:
 
       # 8. 上传 .msi 文件到 Release
       - name: Upload EXE Release Asset
-        uses: actions/upload-release-asset@v3
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -196,7 +196,7 @@ jobs:
 
       # 8. 上传 .msi 文件到 Release
       - name: Upload EXE Release Asset
-        uses: actions/upload-release-asset@v3
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
