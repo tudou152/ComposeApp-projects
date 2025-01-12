@@ -15,6 +15,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Use environment variables
+        run: |
+          echo "Using EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}"
+          echo "Using EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}"
+
       - name: Send email
         uses: dawidd6/action-send-mail@v3
         with:
@@ -23,7 +28,7 @@ jobs:
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "new Tag on Push"
-          body: "A push event occurred. New tag is ${{ github.ref }}"
+          body: "A push event occurred. New tag is ${{ github.event.inputs.tag_name }}"
           to: 414078812@qq.com
           from: ${{ secrets.EMAIL_USERNAME }}
           content_type: text/plain
