@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-windows:
-    runs-on: windows-2022
+    runs-on: windows-latest
     permissions:
       contents: write
 
@@ -45,8 +45,8 @@ jobs:
         run: java -version
 
       # 11. 赋予 Gradle 执行权限
-      - name: Make Gradle executable
-        run: icacls gradlew /grant Everyone:F
+      - name: grant execute permission for gradlew
+        run: chmod +x gradlew
 
       # 12. 运行 Gradle 任务，生成 .exe 文件（启用详细日志）
       - name: Run Gradle packageReleaseExe
@@ -73,4 +73,7 @@ jobs:
               Write-Output "Error log content:"
               Get-Content -Path $stderrLog.FullName
               echo "ERROR_LOG_PATH=$($stderrLog.FullName)" | Out-File -FilePath
+          } else {
+              Write-Output "No error output log found."
+          }
         continue-on-error: true
