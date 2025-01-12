@@ -13,8 +13,8 @@ jobs:
       - name: Set Chinese locale
         run: |
           Set-WinSystemLocale -SystemLocale zh-CN
-          Set-WinUILanguageOverride -Language zh-CN
-          Set-WinUserLanguageList -LanguageList zh-CN -Force
+          $languageList = New-WinUserLanguageList -Language "zh-CN"
+          Set-WinUserLanguageList -LanguageList $languageList -Force
 
       - name: Install WiX Toolset
         run: choco install wixtoolset -y
