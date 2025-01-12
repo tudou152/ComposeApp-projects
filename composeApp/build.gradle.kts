@@ -99,7 +99,7 @@ compose.desktop {
             packageVersion = "1.0.0"
 
             windows {
-                vendor = "DuguTech. "//"武汉独孤科技工作室"
+                vendor = "DuguTech"//"武汉独孤科技工作室"
             }
         }
 
