@@ -94,7 +94,6 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Exe)
 
             packageName = "multitimer"
-            description = "计时器倒计时app"
 
             copyright = "© 2021 DuguTech. All rights reserved."
             packageVersion = "1.0.0"
