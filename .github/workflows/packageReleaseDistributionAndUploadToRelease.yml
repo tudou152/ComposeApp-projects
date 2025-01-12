@@ -150,8 +150,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ env.UPLOAD_URL }}  # 使用动态设置的 upload_url
-          asset_path: |
-            ./artifacts/exe/multitimer-${{ env.VERSION }}.exe  # 下载的构建产物路径
-            ./artifacts/msi/multitimer-${{ env.VERSION }}.msi  # 下载的构建产物路径
+          asset_path: ./artifacts/exe/multitimer-${{ env.VERSION }}.exe  # 下载的构建产物路径
           asset_name: multitimer-${{ env.VERSION }}.exe  # 替换为文件的名称
           asset_content_type: application/x-msdownload  # 设置 MIME 类型
+
+      # 8. 上传 .msi 文件到 Release
+      - name: Upload EXE Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.UPLOAD_URL }}  # 使用动态设置的 upload_url
+          asset_path: ./artifacts/msi/multitimer-${{ env.VERSION }}.msi  # 下载的构建产物路径
+          asset_name: multitimer-${{ env.VERSION }}.msi  # 替换为文件的名称
+          asset_content_type: application/x-msi  # 设置 MIME 类型
