@@ -151,7 +151,7 @@ jobs:
         with:
           upload_url: ${{ env.UPLOAD_URL }}  # 使用动态设置的 upload_url
           asset_path: |
-            ./artifacts/exe/*.exe  # 下载的构建产物路径
-            ./artifacts/msi/*.msi  # 下载的构建产物路径
+            ./artifacts/exe/multitimer-${{ env.VERSION }}.exe  # 下载的构建产物路径
+            ./artifacts/msi/multitimer-${{ env.VERSION }}.msi  # 下载的构建产物路径
           asset_name: multitimer-${{ env.VERSION }}.exe  # 替换为文件的名称
           asset_content_type: application/x-msdownload  # 设置 MIME 类型
