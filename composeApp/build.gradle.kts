@@ -97,6 +97,11 @@ compose.desktop {
 
             copyright = "© 2021 DuguTech. All rights reserved."
             packageVersion = "1.0.0"
+
+
+            windows {
+                vendor = "武汉独孤科技工作室"
+            }
         }
 
         buildTypes.release.proguard {

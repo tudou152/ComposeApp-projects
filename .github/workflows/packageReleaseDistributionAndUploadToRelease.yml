@@ -40,7 +40,16 @@ jobs:
 
       # 6. 上传日志文件到 Artifacts
       - name: Upload logs to Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: package-release-logs  # Artifact 的名称
           path: D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\compose\logs\packageReleaseExe  # 要上传的目录
+
+      # 7. 上传打包出来的文件到 Artifacts
+      - name: Upload logs to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-release  # Artifact 的名称
+          path: |
+            D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\customOutputDir\main-release\exe
+            D:\a\ComposeApp-projects\ComposeApp-projects\composeApp\build\customOutputDir\main-release\msi
