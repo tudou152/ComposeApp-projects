@@ -20,6 +20,11 @@ jobs:
         run: |
           choco install wixtoolset --version 3.11.2 -y
 
+      - name: Add WiX Toolset to PATH
+        run: |
+          $wixPath = "C:\Program Files (x86)\WiX Toolset v3.11\bin"
+          $env:Path += ";$wixPath"
+
       - name: Verify installation
         shell: powershell
         run: |
