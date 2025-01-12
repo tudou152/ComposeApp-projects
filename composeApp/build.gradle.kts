@@ -96,7 +96,7 @@ compose.desktop {
             packageName = "multitimer"
             description = "Multitimer app"  // "计时器倒计时app" 的 Unicode 转义
             copyright = "© 2021 DuguTech. All rights reserved."
-            packageVersion = "1.0.0"
+            packageVersion = "1.1.0"
 
             windows {
                 vendor = "DuguTech"//"武汉独孤科技工作室"
