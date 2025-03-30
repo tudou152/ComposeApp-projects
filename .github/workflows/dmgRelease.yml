@@ -21,7 +21,7 @@ jobs:
         with:
           distribution: 'oracle'
           java-version: '23.0.1'
-          architecture: 'aarch64'  # 指定 aarch64 架构
+          architecture: 'x64'  # 指定 aarch64 架构
 
       # 3. 验证 Java 版本
       - name: Verify Java version
