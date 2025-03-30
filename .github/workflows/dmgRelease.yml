@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14-x64  # 使用最新版本的 macOS
+    runs-on: macos-13-x64  # 使用最新版本的 macOS
 
     steps:
       # 1. 检出代码
